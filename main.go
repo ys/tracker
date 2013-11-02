@@ -3,7 +3,7 @@ package main
 import (
   "encoding/json"
   "net/http"
-  "os"
+  "log"
   _ "github.com/lib/pq"
   "database/sql"
 
@@ -21,7 +21,6 @@ func db() *sql.DB{
 }
 
 func AuthHandler(w http.ResponseWriter, r *http.Request) {
-  var debug bool = false
   w.Header().Set("Location", FitbitUrl())
   w.WriteHeader(302)
 }
@@ -34,9 +33,8 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func insertFirstUser(user FitbitUser, accessToken *oauth.AccessToken) int {
-  var id string
-  db().QueryRow("SELECT id FROM users LIMIT 1").Scan(&id)
-  if id != nil {
+  rows, _ := db().Query("SELECT id FROM users LIMIT 1")
+  if rows.Next() {
     return 0
   }
   stmt, err := db().Prepare("INSERT INTO users(username, access_token, secret_token) VALUES($1, $2, $3)")
